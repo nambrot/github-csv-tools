@@ -1,5 +1,6 @@
 const csv = require("csv");
 const fs = require("fs");
+const path = require("path")
 
 const { createIssue } = require("./helpers.js");
 
@@ -9,6 +10,10 @@ const importFile = (octokit, file, values) => {
       console.error("Error reading file.");
       process.exit(1);
     }
+    const root = path.dirname(file)
+    const base = path.basename(file, ".csv")
+    const files = fs.readdirSync(file.replace(".csv", ""))
+
     csv.parse(
       data,
       {
@@ -41,6 +46,11 @@ const importFile = (octokit, file, values) => {
           // if we have a body column, pass that.
           if (bodyIndex > -1) {
             sendObj.body = row[bodyIndex];
+          }
+
+          const matchingFile = files.find(name => name.startsWith(row[titleIndex]))
+          if (matchingFile) {
+            sendObj.body = fs.readFileSync(path.join(root, base, matchingFile)).toString()
           }
 
           // if we have a labels column, pass that.
